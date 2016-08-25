@@ -1,3 +1,7 @@
+在原程序的基础上，增加了两个扫描文本的接口
+具体使用可以参考Application.java中main函数的部分
+
+**以下为原项目的说明：**
 darts-java: Double-ARray Trie System Java implementation.
 =========================================================
 
