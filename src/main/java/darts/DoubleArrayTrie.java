@@ -51,6 +51,10 @@ public class DoubleArrayTrie {
 	private int nextCheckPos;
 	// boolean no_delete_;
 	int error_;
+	
+	//foundKeys
+	private List<String> foundKeys;
+	private String dealedStr;
 
 	// int (*progressfunc_) (size_t, size_t);
 
@@ -205,6 +209,8 @@ public class DoubleArrayTrie {
 		allocSize = 0;
 		// no_delete_ = false;
 		error_ = 0;
+		foundKeys = new ArrayList<String>();
+		dealedStr = "";
 	}
 
 	// no deconstructor
@@ -224,6 +230,8 @@ public class DoubleArrayTrie {
 		allocSize = 0;
 		size = 0;
 		// no_delete_ = false;
+		foundKeys = null;
+		dealedStr = null;
 	}
 
 	public int getUnitSize() {
@@ -280,7 +288,7 @@ public class DoubleArrayTrie {
 		// if (size >= allocSize) resize (size);
 
 		used = null;
-		key = null;
+		//key = null;
 
 		return error_;
 	}
@@ -324,7 +332,7 @@ public class DoubleArrayTrie {
 	public int exactMatchSearch(String key) {
 		return exactMatchSearch(key, 0, 0, 0);
 	}
-
+	
 	public int exactMatchSearch(String key, int pos, int len, int nodePos) {
 		if (len <= 0)
 			len = key.length();
@@ -404,5 +412,118 @@ public class DoubleArrayTrie {
 			System.err.println("i: " + i + " [" + base[i] + ", " + check[i]
 					+ "]");
 		}
+	}
+	
+	
+	//custom functions
+	public List<String> getAllKeysInContent(String content) {
+		int pos = 0;
+		int len = 0;
+		int nodePos = 0;
+		int result = -1;
+		
+		if(check==null || base==null || content==null){
+			return null;
+		}
+		
+		len = content.length();
+		char[] keyChars = new char[len+1];
+		System.arraycopy(content.toCharArray(),0,keyChars,0,len);	
+		keyChars[len] = '囧';
+		foundKeys.clear();		
+		
+		int b = base[nodePos];
+		int p;
+		boolean intoState = false;
+
+		for (int i = pos; i <= len; i++) {
+			p = b + (int) (keyChars[i]) + 1;
+			if (b == check[p]){
+				b = base[p];
+				intoState = true;
+			} else{
+				p = b;
+				int n = base[p];
+				if (b == check[p] && n < 0) {		//is a end node
+					result = -n - 1;
+					if(result>0){		//is the keyword
+						foundKeys.add(String.valueOf(result));
+						pos = i;
+						i--;
+					} 
+				} 
+				b = base[nodePos];		//recover b to root
+				if(intoState==true){
+					i=pos;
+					pos++;
+					intoState = false;
+				}
+			}
+		}		
+		return foundKeys;
+	}	
+	
+	public String getFilteredContent(String content){
+		int pos = 0;
+		int len = 0;
+		int nodePos = 0;
+		int result = -1;
+		
+		if(check==null || base==null || content==null){
+			return content;
+		}
+		len = content.length();
+		
+		char[] keyChars = new char[len+1];
+		System.arraycopy(content.toCharArray(),0,keyChars,0,len);	
+		keyChars[len] = '囧';
+		
+		StringBuffer resultStr= new StringBuffer();
+		
+		int b = base[nodePos];
+		int p;
+		boolean intoState = false;
+		int beginIndex = pos;
+
+		for (int i = pos; i <= len; i++) {
+			p = b + (int) (keyChars[i]) + 1;
+			if (b == check[p]){
+				b = base[p];
+				intoState = true;
+			} else{
+				p = b;
+				int n = base[p];
+				if (b == check[p] && n < 0) {		//is a end node
+					result = -n - 1;
+					if(result>0){		//is the keyword
+						String keywordStr = key.get(result);
+						resultStr.append(content.substring(beginIndex, i-keywordStr.length()));
+						resultStr.append(getReplacedString(keywordStr,"*"));
+						//foundKeys.add(String.valueOf(result));
+						beginIndex = i;
+						pos = i;
+						i--;						
+					} 					
+				} 
+				b = base[nodePos];		//recover b to root
+				if(intoState==true){
+					i=pos;
+					pos++;
+					intoState = false;
+				}
+			}
+		}	
+		if(pos<len){
+			resultStr.append(content.substring(pos, len));
+		}
+		return resultStr.toString();
+	}
+	
+	private String getReplacedString(String input,String pattern){
+		StringBuffer sb = new StringBuffer();
+		for(int i=0;i<input.length();i++){
+			sb.append(pattern);
+		}
+		return sb.toString();
 	}
 }
